@@ -22,10 +22,15 @@
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "/opt/nodejs/productsLayer": [
+        "lambda/products/layers/productsLayer/nodejs/productRepository"
+      ]
+    }
   },
   "exclude": [
-    "node_modules",
-    "cdk.out"
+    "node_modules"
   ]
 }

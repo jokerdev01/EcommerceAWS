@@ -6,28 +6,84 @@ import * as cdk from "aws-cdk-lib"
 
 import { Construct } from "constructs"
 
+import * as dynamobd from "aws-cdk-lib/aws-dynamodb" 
+
+import * as ssm from "aws-cdk-lib/aws-ssm"
+
 
 export class ProductsAppStack extends cdk.Stack {
     readonly productsFetchHandler: lambdaNodeJS.NodejsFunction
+    readonly productsDdb: dynamobd.Table
+    readonly productsAdminHandler: lambdaNodeJS.NodejsFunction
 
-    constructor(scope: Construct, id: string, props?: cdk.StackProps){
+
+    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
 
         super(scope, id, props)
 
+
+        //Products Layers
+        const productsLayerArn = ssm.StringParameter.valueForStringParameter(this, "ProductsLayerVersionArn")
+        const productsLayer = lambda.LayerVersion.fromLayerVersionArn(this, "ProductsLayerVersionArn", productsLayerArn)
+
+        this.productsDdb = new dynamobd.Table(this, "ProductDbd", {
+            tableName: "Products",
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+            partitionKey: {
+                name: "id",
+                type: dynamobd.AttributeType.STRING
+            },
+            billingMode: dynamobd.BillingMode.PROVISIONED,
+            readCapacity: 1,
+            writeCapacity: 1
+        })
+
         this.productsFetchHandler = new lambdaNodeJS.NodejsFunction(this,
-            "ProductsFetchFunction",{
-                runtime: lambda.Runtime.NODEJS_20_X,
-                memorySize: 512,
-                functionName: "ProductsFetchFunction",
-                entry: "lambda/products/productsFetchFunction.ts",
-                handler: "handler",
-                timeout: cdk.Duration.seconds(5),
-                bundling: {
-                    minify:true,
-                    sourceMap: false
-                },
-            }
+            "ProductsFetchFunction", {
+            runtime: lambda.Runtime.NODEJS_20_X,
+            memorySize: 512,
+            functionName: "ProductsFetchFunction",
+            entry: "lambda/products/productsFetchFunction.ts",
+            handler: "handler",
+            timeout: cdk.Duration.seconds(5),
+            bundling: {
+                minify: true,
+                sourceMap: false
+            },
+            environment: {
+                PRODUCTS_DDB: this.productsDdb.tableName
+            },
+
+            layers: [productsLayer]
+
+        }
         )
+
+        this.productsDdb.grantReadData(this.productsFetchHandler)
+
+        this.productsAdminHandler = new lambdaNodeJS.NodejsFunction(this,
+            "ProductsAdminFunction", {
+            runtime: lambda.Runtime.NODEJS_20_X,
+            memorySize: 512,
+            functionName: "ProductsAdminFunction",
+            entry: "lambda/products/productsAdminFunction.ts",
+            handler: "handler",
+            timeout: cdk.Duration.seconds(5),
+            bundling: {
+                minify: true,
+                sourceMap: false
+            },
+            environment: {
+                PRODUCTS_DDB: this.productsDdb.tableName
+            },
+
+            
+            layers: [productsLayer]
+
+        }
+        )
+
+        this.productsDdb.grantReadData(this.productsAdminHandler)
 
     }
 

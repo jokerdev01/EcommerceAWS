@@ -2,7 +2,7 @@
   "name": "ecommerce_aws",
   "version": "0.1.0",
   "bin": {
-    "ecommerce_aws": "bin/ecommerce_aws.js"
+    "ecommerce_aws": "bin/ecommerce_aws.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -25,6 +25,7 @@
   "dependencies": {
     "aws-cdk-lib": "2.136.0",
     "constructs": "^10.0.0",
+    "express": "^4.19.2",
     "source-map-support": "^0.5.21"
   }
 }
