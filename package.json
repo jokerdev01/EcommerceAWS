@@ -25,6 +25,7 @@
   "dependencies": {
     "aws-cdk-lib": "2.136.0",
     "constructs": "^10.0.0",
+    "ecommerce_aws": "file:",
     "express": "^4.19.2",
     "source-map-support": "^0.5.21"
   }
